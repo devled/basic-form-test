@@ -1,0 +1,68 @@
+<?php
+
+/**
+ * @file.
+ *
+ * Module to provide a basic form altering.
+ */
+
+/**
+ * Implements hook_form_FORM_ID_alter()).
+ */
+function alter_custom_test_form_form_CUSTOM_TEST_FORM_alter(&$form, &$form_state, $form_id) {
+
+  // Make existing field required.
+  $form['first_name']['#required'] = TRUE;
+
+  // Alter field title.
+  $form['first_name']['#title'] = 'Name';
+
+  // Add custom email field.
+  $form['email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Email'),
+    '#description' => t('Please enter your email'),
+    '#required' => TRUE,
+  );
+
+  // Move submit button to the bottom of the form.
+  $form['submit']['#weight'] = 1;
+
+  // Custom validate handler.
+  $form['#validate'][] = 'alter_custom_test_form_additional_field_validate';
+
+  // Custom submit handler.
+  $form['#submit'][] = 'alter_custom_test_form_additional_field_submit';
+}
+
+/**
+ * Custom validate handler.
+ */
+function alter_custom_test_form_additional_field_validate($form, &$form_state) {
+
+  // Verify it's a real email.
+  if (!valid_email_address($form_state['values']['email'])) {
+   form_set_error('email', t('Please enter a valid email address.'));
+  }
+
+  // Verify name does not contain any invalid characters.
+  $name = $form_state['values']['first_name'];
+  if (strlen($name) > 0 && !preg_match('/[a-z A-Z\'\-]/', $name)) {
+    form_set_error('submitted][name', t('Your name contains invalid characters. Only letters are allowed!'));
+  }
+}
+
+/**
+ * Custom submit handler.
+ */
+function alter_custom_test_form_additional_field_submit($form, &$form_state) {
+
+  // Set a generic drupal message.
+  drupal_set_message(
+    t('The following email @email will be used to reach you in the future. ' . '</br></br>' . 'Thank you.', 
+      array(
+      '@email' => $form_state['values']['email']
+      )
+    )
+  );
+}
